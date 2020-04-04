@@ -6,7 +6,7 @@ This program is written in Python and is meant for analysing mainly risk and ret
 
 ## How it works
 
-First of all the program needs to know the ticker (symbol) of the stock you want to examine, or if it's a portfolio, you will have to provide both tickers of all the stocks in the portfolio and the weights of each stock in the portfolio. Secondly the program needs a timeframe in Datetime format e.g. (2015, 1, 1). Thirdly you should be aware of the risk free return (RF), which by default is set to 0.013 (1.3%). The RF is used later in the calculation of the required return (according to CAPM).
+First of all the program needs to know the ticker (symbol) of the stock you want to examine, or if it's a portfolio, you will have to provide both tickers of all the stocks in the portfolio and the weights of each stock in the portfolio. Secondly you will need to define the ticker for the benchemark (e.g. an index). Thirdly the program needs a timeframe in Datetime format e.g. (2015, 1, 1). Fourthly you should be aware of the risk free return (RF), which by default is set to 0.013 (1.3%). The RF is used later in the calculation of the required return (according to CAPM).
 ```
 # The given ticker and the benchmark (market) to compare
 ticker = 'AAPL'
@@ -62,6 +62,9 @@ def candlestick():
 
 candlestick()
 ```
+The candlestick-diagram will look like this. Notice that also the volume is added in the lower part of the figure.
+![Candlestick](https://user-images.githubusercontent.com/63104057/78458735-e582ce80-76b3-11ea-99db-994df12dcfb6.png)
+
 The next function takes the tickers and weights in the portfolio and grabs the price data from Yahoo. Then it uses .resample('M') to reduce the amount of data to only monthly price data indstead of daily (you can change the 'M' to other presets such as 'W' for weekly). Futhermore we're not really interested in the raw price data, but rather in the returns of the stocks, which is why we calculate the monthly returns using .pct_chance().
 With the monthly returns known the function calculates alot of different values: standard deviation (risk), mean (expected return), correlation coefficients, beta values, alpha values and required return. Also you will get a graf that shows the price evolution in relative terms for each ticker as well as a heatmap visualizing the correlations between the stocks in the portfolio. 
 ```
@@ -169,6 +172,58 @@ def portfolio_analysis():
 
 portfolio_analysis()
 ```
+The result of this function will be the calculated values presented in the output tab as demonstrated beneath.
+```
+Risk of each ticker:
+TSLA    0.141
+FB      0.072
+AAPL    0.078
+AMZN    0.083
+GOOG    0.060
+
+Return on each ticker:
+TSLA    0.031
+FB      0.017
+AAPL    0.018
+AMZN    0.031
+GOOG    0.017
+
+Correlation between tickers and benchmark:
+TSLA    0.121
+FB      0.527
+AAPL    0.594
+AMZN    0.669
+GOOG    0.614
+
+Beta values for tickers in portfolio:
+TSLA    0.48
+FB      1.05
+AAPL    1.29
+AMZN    1.55
+GOOG    1.02
+
+Alpha values for tickers in portfolio:
+TSLA    2.75
+FB      0.99
+AAPL    0.92
+AMZN    2.08
+GOOG    1.01
+
+Beta and alpha value for portfolio:
+Beta    1.151
+Alpha   1.774
+
+Risk, expected return, required return and correlation with benchmark for portfolio:
+Risk        0.061
+Corr        0.676
+Return      0.025
+
+```
+The price evolution for the tickers in the portfolio:
+![Portfolio_movment](https://user-images.githubusercontent.com/63104057/78459048-968a6880-76b6-11ea-8961-fa5eb5423239.png)
+The correlation table for the tickers in the portfolio:
+![Portfolio_correlation_table](https://user-images.githubusercontent.com/63104057/78459090-ed903d80-76b6-11ea-8753-9df50e2f6d10.png)
+
 The last function does pretty much the same as the previous, but only for one ticker. It does however include a wide range of key accounting indicators, such as Return on Equity, Return on Invested Capital, Debt to Equity, Price/Earnings ratio etc. This is quite handy as it gives an indepth undersanding of the companys capital structur and its fundamental value. 
 ```
 def ticker_analysis():
@@ -244,3 +299,26 @@ def ticker_analysis():
     
 ticker_analysis()
 ```
+The output of this function will be the calulatede values:
+```
+Risk, expected return, required return and correlation with benchmark for AAPL:
+Risk        0.078
+Corr        0.594
+Return      0.018
+Req return  0.005
+
+Beta and alpha value for AAPL:
+Beta        1.29
+Alpha       0.92
+
+Key accounting indicators for AAPL:
+Return on Equity             0.611
+Return on Tangible Assets    0.163
+Return on Invested Capital   0.275
+Debt to Equity               2.741
+Debt to Assets               0.733
+Current Ratio                1.54
+Price/Earnings               17.467
+```
+And the figure showing the price evolution for the given ticker:
+![Ticker_movment](https://user-images.githubusercontent.com/63104057/78459143-5081d480-76b7-11ea-9651-21de75839ba5.png)
