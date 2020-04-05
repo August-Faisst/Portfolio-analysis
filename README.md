@@ -23,7 +23,7 @@ wts = [0.2, 0.1, 0.1, 0.4, 0.2]
 start = dt.datetime(2015, 3, 1)
 end = dt.datetime(2020, 3, 1)
 ```
-The first function in the program is just a quick visualization of the price evolution for the given ticker. It returns a candlestick-diagram and a 100 days moving average plot (the number of days can be ajusted by .rolling(window=100).mean()).
+The first function in the program is just a quick visualization of the price evolution for the given ticker. It returns a candlestick-diagram and a 100 days moving average plot (the number of days can be ajusted by .rolling(window=100).mean()). 
 ```python
 def candlestick():
     df = web.DataReader(ticker, 'yahoo', start, end)
