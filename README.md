@@ -7,7 +7,7 @@ This program is written in Python and is meant for analysing mainly risk and ret
 ## How it works
 
 First of all the program needs to know the ticker (symbol) of the stock you want to examine, or if it's a portfolio, you will have to provide both tickers of all the stocks in the portfolio and the weights of each stock in the portfolio. Secondly you will need to define the ticker for the benchemark (e.g. an index). Thirdly the program needs a timeframe in Datetime format e.g. (2015, 1, 1). Fourthly you should be aware of the risk free return (RF), which by default is set to 0.013 (1.3%). The RF is used later in the calculation of the required return (according to CAPM).
-```
+```python
 # The given ticker and the benchmark (market) to compare
 ticker = 'AAPL'
 benchmark = '^GSPC'
@@ -24,7 +24,7 @@ start = dt.datetime(2015, 3, 1)
 end = dt.datetime(2020, 3, 1)
 ```
 The first function in the program is just a quick visualization of the price evolution for the given ticker. It returns a candlestick-diagram and a 100 days moving average plot (the number of days can be ajusted by .rolling(window=100).mean()).
-```
+```python
 def candlestick():
     df = web.DataReader(ticker, 'yahoo', start, end)
 
@@ -34,7 +34,7 @@ def candlestick():
     df['100ma'] = df['Adj Close'].rolling(window=100).mean()
 
     # Plotting the data in a 2 by 1 grid
-    ax1 = plt.subplot2grid((6,1), (0,0), rowspan=5, colspan=1)
+    ax1 = plt.subplot2grid((6,1), (0,0), rowspan = 5, colspan = 1)
     plt.grid(color = '#D3D3D3', linestyle = '--', linewidth = 0.5)
     plt.yticks(fontsize = 8, fontname = font)
     plt.xticks(color = 'w')
@@ -67,10 +67,11 @@ The candlestick-diagram will look like this. Notice that also the volume is adde
 
 The next function takes the tickers and weights in the portfolio and grabs the price data from Yahoo. Then it uses .resample('M') to reduce the amount of data to only monthly price data indstead of daily (you can change the 'M' to other presets such as 'W' for weekly). Futhermore we're not really interested in the raw price data, but rather in the returns of the stocks, which is why we calculate the monthly returns using .pct_chance().
 With the monthly returns known the function calculates alot of different values: standard deviation (risk), mean (expected return), correlation coefficients, beta values, alpha values and required return. Also you will get a graf that shows the price evolution in relative terms for each ticker as well as a heatmap visualizing the correlations between the stocks in the portfolio. 
-```
+The function does also return some key financial highlights about the stocks in the portfolio. 
+```python
 def portfolio_analysis():
     df_tickers = web.DataReader(tickers, 'yahoo', start, end)
-    df_tickers = df_tickers['Adj Close'].rename_axis(index=None, columns=None)
+    df_tickers = df_tickers['Adj Close'].rename_axis(index = None, columns = None)
     df_benchmark = web.DataReader(benchmark, 'yahoo', start, end)
     df_benchmark = df_benchmark['Adj Close']
 
@@ -82,9 +83,8 @@ def portfolio_analysis():
     # Calculating standard deviation for tickers and benchmark
     std_tickers_monthly_returns = df_tickers_monthly_returns.std()
     std_benchmark_monthly_returns = df_benchmark_monthly_returns.std()
-    print('')
-    print('Risk of each ticker:')
-    print(round(std_tickers_monthly_returns, 3))
+    #print('Risk of each ticker:')
+    #print(round(std_tickers_monthly_returns, 3))
 
     # Calculating standard deviation for portfolio
     cov_tickers = df_tickers_monthly_returns.cov()
@@ -95,9 +95,8 @@ def portfolio_analysis():
     exp_return_monthly = df_tickers_monthly_returns.mean()
     exp_return_monthly_benchmark = df_benchmark_monthly_returns.mean()
     exp_return_monthly_sum = (exp_return_monthly * wts).sum()
-    print('')
-    print('Return on each ticker:')
-    print(round(exp_return_monthly, 3))
+    #print('Return on each ticker:')
+    #print(round(exp_return_monthly, 3))
 
     # Calculating the correlation coefficients between each ticker and benchmark
     corr_list = []
@@ -105,9 +104,8 @@ def portfolio_analysis():
         corr_ticker_to_benchmark = df_tickers_monthly_returns[i].corr(df_benchmark_monthly_returns)
         corr_list.append(corr_ticker_to_benchmark)
     corr_tickers_monthly_returns = pd.DataFrame(corr_list, index = tickers)[0]
-    print('')
-    print('Correlation between tickers and benchmark:')
-    print(round(corr_tickers_monthly_returns, 3))
+    #print('Correlation between tickers and benchmark:')
+    #print(round(corr_tickers_monthly_returns, 3))
 
     # Calculating the correlation between tickers
     corr_tabel_monthly = df_tickers_monthly_returns.corr()
@@ -121,9 +119,8 @@ def portfolio_analysis():
         beta_ticker = corr_tickers_monthly_returns[i] * (std_tickers_monthly_returns[i]/std_benchmark_monthly_returns)
         beta_list.append(beta_ticker)
     beta_tickers_monthly_returns = pd.DataFrame(beta_list, index = tickers)[0]
-    print('')
-    print('Beta values for tickers in portfolio:')
-    print(round(beta_tickers_monthly_returns, 2))
+    #print('Beta values for tickers in portfolio:')
+    #print(round(beta_tickers_monthly_returns, 2))
 
     # Calculating alpha value for tickers(5 year monthly)
     alpha_list = []
@@ -131,9 +128,8 @@ def portfolio_analysis():
         alpha_tickers = (exp_return_monthly[i] - beta_tickers_monthly_returns[i] * exp_return_monthly_benchmark)*100
         alpha_list.append(alpha_tickers)
     alpha_tickers_monthly_returns = pd.DataFrame(alpha_list, index = tickers)[0]
-    print('')
-    print('Alpha values for tickers in portfolio:')
-    print(round(alpha_tickers_monthly_returns, 2))
+    #print('Alpha values for tickers in portfolio:')
+    #print(round(alpha_tickers_monthly_returns, 2))
 
     # Calculating beta and alpha value for portfolio(5 year monthly)
     beta_portfolio_monthly_returns = (beta_tickers_monthly_returns * wts).sum()
@@ -142,17 +138,76 @@ def portfolio_analysis():
     # Calculating the required return on the portfolio given the beta value
     req_return_monthly = RF_return + beta_portfolio_monthly_returns * (exp_return_monthly_benchmark - RF_return)
 
-    print('')
-    print('Beta and alpha value for portfolio:')
-    print('Beta   ', round(beta_portfolio_monthly_returns, 3))
-    print('Alpha  ', round(alpha_portfolio_monthly_returns, 3))
+    # Combining ticker trading information into one dataframe
+    table_tickers = pd.concat([std_tickers_monthly_returns,
+                                exp_return_monthly,
+                                corr_tickers_monthly_returns,
+                                round(beta_tickers_monthly_returns, 2),
+                                round(alpha_tickers_monthly_returns, 2)], axis=1)
+    table_tickers.columns = ['Risk', 'Expected return', 'Correlation to benchmark', 'Beta', 'Alpha']
+    print('Trading Information About Tickers:')
+    print(table_tickers.round(3).T.astype(object))
 
+    # Getting key values for tickers from financialmodelingprep
+    ROE_list = []
+    ROA_list = []
+    ROIC_list = []
+    DE_list = []
+    DA_list = []
+    Current_ratio_list = []
+    PE_list = []
+    finance_list = []
+    for i in tickers:
+        ticker_financial_data = requests.get(f'https://financialmodelingprep.com/api/v3/company-key-metrics/{i}')
+        ticker_financial_data = ticker_financial_data.json()
+        ROE = float(ticker_financial_data['metrics'][0]['ROE'])
+        ROE_list.append(ROE)
+        ROA = float(ticker_financial_data['metrics'][0]['Return on Tangible Assets'])
+        ROA_list.append(ROA)
+        ROIC = float(ticker_financial_data['metrics'][0]['ROIC'])
+        ROIC_list.append(ROIC)
+        DE = float(ticker_financial_data['metrics'][0]['Debt to Equity'])
+        DE_list.append(DE)
+        DA = float(ticker_financial_data['metrics'][0]['Debt to Assets'])
+        DA_list.append(DA)
+        Current_ratio = float(ticker_financial_data['metrics'][0]['Current ratio'])
+        Current_ratio_list.append(Current_ratio)
+        PE = float(ticker_financial_data['metrics'][0]['PE ratio'])
+        PE_list.append(PE)
+
+    table_tickers_finance = pd.DataFrame([ROE_list,
+                                    ROA_list,
+                                    ROIC_list,
+                                    DE_list,
+                                    DA_list,
+                                    Current_ratio_list,
+                                    PE_list], columns = tickers, index = ['Return on Equity',
+                                                                'Return on Tangible Assets',
+                                                                'Return on Invested Cap',
+                                                                'Debt to Equity',
+                                                                'Debt to Assets',
+                                                                'Current Ratio',
+                                                                'Price/Earnings Ratio'])
     print('')
-    print('Risk, expected return, required return and correlation with benchmark for portfolio:')
-    print('Risk       ', round(std_portfolio, 3))
-    print('Corr       ', round(corr_portfolio_monthly_returns, 3))
-    print('Return     ', round(exp_return_monthly_sum, 3))
-    print('Req return ', round(req_return_monthly, 3))
+    print('\nFinancial Highlights About Tickers:')
+    print(table_tickers_finance.round(2))
+
+    # Creating a dataframe for the portfolio trading information
+    table_portfolio = pd.DataFrame([std_portfolio,
+                                    exp_return_monthly_sum,
+                                    req_return_monthly,
+                                    corr_portfolio_monthly_returns,
+                                    beta_portfolio_monthly_returns,
+                                    alpha_portfolio_monthly_returns], columns = None,
+                                                                    index = ['Risk',
+                                                                            'Expected return',
+                                                                            'Required return',
+                                                                            'Correlation to benchmark',
+                                                                            'Beta',
+                                                                            'Alpha'])[0]
+    print('')
+    print('\nTrading Information About Portfolio:')
+    print(table_portfolio.round(3))
 
     # Plotting heatmap for portfolio
     fig = plt.figure(figsize=(9, 6))
@@ -174,58 +229,39 @@ portfolio_analysis()
 ```
 The result of this function will be the calculated values presented in the output tab as demonstrated beneath.
 ```
-Risk of each ticker:
-TSLA    0.141
-FB      0.072
-AAPL    0.078
-AMZN    0.083
-GOOG    0.060
+Trading Information About The Tickers:
+                           TSLA     FB   AAPL   AMZN   GOOG
+Risk                      0.141  0.072  0.078  0.083   0.06
+Expected return           0.031  0.017  0.018  0.031  0.017
+Correlation to benchmark  0.121  0.527  0.594  0.669  0.614
+Beta                       0.48   1.05   1.29   1.55   1.02
+Alpha                      2.75   0.99   0.92   2.08   1.01
 
-Return on each ticker:
-TSLA    0.031
-FB      0.017
-AAPL    0.018
-AMZN    0.031
-GOOG    0.017
+Financial Highlights About The Tickers:
+                            TSLA     FB   AAPL   AMZN   GOOG
+Return on Equity           -0.20   0.18   0.61   0.19   0.17
+Return on Tangible Assets  -0.03   0.16   0.16   0.06   0.14
+Return on Invested Cap     -0.02   0.20   0.27   0.11   0.15
+Debt to Equity              5.04   0.32   2.74   2.63   0.37
+Debt to Assets              0.83   0.24   0.73   0.72   0.27
+Current Ratio               0.83   4.40   1.54   1.10   3.37
+Price/Earnings Ratio      -62.63  30.83  17.47  75.95  14.70
 
-Correlation between tickers and benchmark:
-TSLA    0.121
-FB      0.527
-AAPL    0.594
-AMZN    0.669
-GOOG    0.614
-
-Beta values for tickers in portfolio:
-TSLA    0.48
-FB      1.05
-AAPL    1.29
-AMZN    1.55
-GOOG    1.02
-
-Alpha values for tickers in portfolio:
-TSLA    2.75
-FB      0.99
-AAPL    0.92
-AMZN    2.08
-GOOG    1.01
-
-Beta and alpha value for portfolio:
-Beta    1.151
-Alpha   1.774
-
-Risk, expected return, required return and correlation with benchmark for portfolio:
-Risk        0.061
-Corr        0.676
-Return      0.025
-
+Trading Information About The Portfolio:
+Risk                        0.061
+Expected return             0.025
+Required return             0.006
+Correlation to benchmark    0.676
+Beta                        1.151
+Alpha                       1.774
 ```
-The price evolution for the tickers in the portfolio:
+The price evolution for the stocks in the portfolio:
 ![Portfolio_movment](https://user-images.githubusercontent.com/63104057/78459048-968a6880-76b6-11ea-8961-fa5eb5423239.png)
-The correlation table for the tickers in the portfolio:
+The correlation table for the stocks in the portfolio:
 ![Portfolio_correlation_table](https://user-images.githubusercontent.com/63104057/78459090-ed903d80-76b6-11ea-8753-9df50e2f6d10.png)
 
-The last function does pretty much the same as the previous, but only for one ticker. It does however include a wide range of key accounting indicators, such as Return on Equity, Return on Invested Capital, Debt to Equity, Price/Earnings ratio etc. This is quite handy as it gives an indepth undersanding of the companys capital structur and its fundamental value. 
-```
+The last function does pretty much the same as the previous, but only for one ticker. 
+```python
 def ticker_analysis():
     df_ticker = web.DataReader(ticker, 'yahoo', start, end)
     df_ticker = df_ticker['Adj Close']
@@ -256,21 +292,24 @@ def ticker_analysis():
     # Calculating the required return on the portfolio given the beta value
     req_return_monthly = RF_return + beta * (exp_return_monthly_benchmark - RF_return)
 
-    print('\nRisk, expected return, required return and correlation with benchmark for ', ticker, ':', sep = '')
-    print('Risk       ', round(std_ticker_monthly_returns, 3))
-    print('Corr       ', round(corr_monthly, 3))
-    print('Return     ', round(exp_return_monthly, 3))
-    print('Req return ', round(req_return_monthly, 3))
-
-    print('')
-    print('Beta and alpha value for ', ticker, ':', sep = '')
-    print('Beta       ', round(beta, 2))
-    print('Alpha      ', round(alpha, 2))
+    # Creating a dataframe for the portfolio trading information
+    table_ticker_trading = pd.DataFrame([std_ticker_monthly_returns,
+                                    exp_return_monthly,
+                                    req_return_monthly,
+                                    corr_monthly,
+                                    round(beta, 2),
+                                    round(alpha, 2)], columns = None, index = ['Risk',
+                                                                            'Expected return',
+                                                                            'Required return',
+                                                                            'Correlation to benchmark',
+                                                                            'Beta',
+                                                                            'Alpha'])[0]
+    print('\nTrading Information About ', ticker, ':', sep='')
+    print(table_ticker_trading.round(3).astype(object))
 
     # Getting key values for ticker from financialmodelingprep
     ticker_financial_data = requests.get(f'https://financialmodelingprep.com/api/v3/company-key-metrics/{ticker}')
     ticker_financial_data = ticker_financial_data.json()
-    #print(ticker_capital_structur)
 
     ROE = float(ticker_financial_data['metrics'][0]['ROE'])
     ROA = float(ticker_financial_data['metrics'][0]['Return on Tangible Assets'])
@@ -280,15 +319,22 @@ def ticker_analysis():
     Current_ratio = float(ticker_financial_data['metrics'][0]['Current ratio'])
     PE = float(ticker_financial_data['metrics'][0]['PE ratio'])
 
+    table_ticker_finance = pd.DataFrame([ROE,
+                                    ROA,
+                                    ROIC,
+                                    DE,
+                                    DA,
+                                    Current_ratio,
+                                    PE], columns = None, index = ['Return on Equity',
+                                                                'Return on Tangible Assets',
+                                                                'Return on Invested Capital',
+                                                                'Debt to Equity',
+                                                                'Debt to Assets',
+                                                                'Current Ratio',
+                                                                'Price/Earnings Ratio'])[0]
     print('')
-    print('\nKey accounting indicators for ', ticker, ':', sep = '')
-    print('Return on Equity            ', round(ROE, 3))
-    print('Return on Tangible Assets   ', round(ROA, 3))
-    print('Return on Invested Capital  ', round(ROIC, 3))
-    print('Debt to Equity              ', round(DE, 3))
-    print('Debt to Assets              ', round(DA, 3))
-    print('Current Ratio               ', round(Current_ratio, 3))
-    print('Price/Earnings              ', round(PE, 3))
+    print('\nFinancial Highlights About ', ticker, ':', sep='')
+    print(table_ticker_finance.round(2))
 
     # Plotting ticker price
     plt.plot(df_ticker, color = '#188fff', linewidth = 0.8, linestyle = '-')
@@ -296,29 +342,27 @@ def ticker_analysis():
     plt.yticks(fontsize = 8, fontname = font)
     plt.xticks(fontsize = 8, fontname = font)
     plt.show()
-    
+
 ticker_analysis()
 ```
 The output of this function will be the calulatede values:
 ```
-Risk, expected return, required return and correlation with benchmark for AAPL:
-Risk        0.078
-Corr        0.594
-Return      0.018
-Req return  0.005
+Trading Information About AAPL:
+Risk                        0.078
+Expected return             0.018
+Required return             0.005
+Correlation to benchmark    0.594
+Beta                         1.29
+Alpha                        0.92
 
-Beta and alpha value for AAPL:
-Beta        1.29
-Alpha       0.92
-
-Key accounting indicators for AAPL:
-Return on Equity             0.611
-Return on Tangible Assets    0.163
-Return on Invested Capital   0.275
-Debt to Equity               2.741
-Debt to Assets               0.733
-Current Ratio                1.54
-Price/Earnings               17.467
+Financial Highlights About AAPL:
+Return on Equity               0.61
+Return on Tangible Assets      0.16
+Return on Invested Capital     0.27
+Debt to Equity                 2.74
+Debt to Assets                 0.73
+Current Ratio                  1.54
+Price/Earnings Ratio          17.47
 ```
 And the figure showing the price evolution for the given ticker:
 ![Ticker_movment](https://user-images.githubusercontent.com/63104057/78459143-5081d480-76b7-11ea-9651-21de75839ba5.png)
