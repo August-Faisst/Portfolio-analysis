@@ -63,7 +63,7 @@ def candlestick():
 candlestick()
 ```
 The candlestick-diagram will look like this. Notice that also the volume is added in the lower part of the figure.
-![Candlestick](https://user-images.githubusercontent.com/63104057/78458735-e582ce80-76b3-11ea-99db-994df12dcfb6.png)
+![Candlestick](https://user-images.githubusercontent.com/63104057/79080858-c2da6080-7d18-11ea-9a7c-174854939407.png)
 
 The next function takes the tickers and weights in the portfolio and grabs the price data from Yahoo. Then it uses .resample('M') to reduce the amount of data to only monthly price data indstead of daily (you can change the 'M' to other presets such as 'W' for weekly). Futhermore we're not really interested in the raw price data, but rather in the returns of the stocks, which is why we calculate the monthly returns using .pct_chance().
 With the monthly returns known the function calculates alot of different values: standard deviation (risk), mean (expected return), correlation coefficients, beta values, alpha values and required return. Also you will get a graf that shows the price evolution in relative terms for each ticker as well as a heatmap visualizing the correlations between the stocks in the portfolio. 
@@ -216,9 +216,11 @@ def portfolio_analysis():
     ax.xaxis.tick_top()
 
     # Plotting ticker prices
-    tickers_plot = df_tickers.apply(lambda x: x / x[0])
-    tickers_plot.head() - 1
-    tickers_plot.plot(linewidth = 0.8, linestyle = '-')
+    df_tickers_sum = (df_tickers * wts).sum(axis = 1)
+    tickers_benchmark_merge = pd.concat([df_tickers, df_tickers_sum, df_benchmark], axis = 1).rename(columns={0: 'Portfolio', 'Adj Close': 'Benchmark'})
+    index_plot = tickers_benchmark_merge.apply(lambda x: x / x[0])
+    index_plot.head() - 1
+    index_plot.plot(linewidth = 0.8, linestyle = '-')
     plt.grid(color = '#D3D3D3', linestyle = '--', linewidth = 0.5)
     plt.legend(loc='upper left', fontsize = 8)
     plt.yticks(fontsize = 8, fontname = font)
@@ -256,7 +258,7 @@ Beta                        1.151
 Alpha                       1.774
 ```
 The price evolution for the stocks in the portfolio:
-![Portfolio_movment](https://user-images.githubusercontent.com/63104057/78459048-968a6880-76b6-11ea-8961-fa5eb5423239.png)
+![Portfolio_movment](https://user-images.githubusercontent.com/63104057/79080711-7c383680-7d17-11ea-8e98-705a65d7f12e.png)
 The correlation table for the stocks in the portfolio:
 ![Portfolio_correlation_table](https://user-images.githubusercontent.com/63104057/78459090-ed903d80-76b6-11ea-8753-9df50e2f6d10.png)
 
@@ -365,4 +367,4 @@ Current Ratio                  1.54
 Price/Earnings Ratio          17.47
 ```
 And the figure showing the price evolution for the given ticker:
-![Ticker_movment](https://user-images.githubusercontent.com/63104057/78459143-5081d480-76b7-11ea-9651-21de75839ba5.png)
+![Ticker_movment](https://user-images.githubusercontent.com/63104057/79080918-282e5180-7d19-11ea-8c38-a2346f0112d4.png)
